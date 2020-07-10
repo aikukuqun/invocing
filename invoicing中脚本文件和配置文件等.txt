@@ -1,0 +1,1129 @@
+cd ~/invoicing/all_date/${nowaday}
+cat >client.list
+anz.mcd
+jp.mcd
+sg.mcd
+au.hungryjacks
+gt.mcd
+riyadh.sa.mcd
+au.subway
+au.bp
+au.krispykreme
+us.mcd
+py.mcd
+uk.merlin
+sv.mcd
+riyadh.subway
+au.carlsjr
+mo.mcd
+hn.mcd
+ni.mcd
+au.merlin
+fr.mcd
+au.tacobell
+pf.mcd
+fj.mcd
+nl.mcd
+om.subway
+au.tarongazoo
+kw.subway
+jp.legoland
+sr.mcd
+brn.mcd
+us.whataburger
+sharjah.uae.subway
+salalah.om.subway
+abudhabi.uae.subway
+sg.pizzahut
+ca.cfa
+ca.mcd
+us.scnbnc
+us.cfa
+lc.kfc
+sg.toysrus
+us.legoland
+uae-subway
+
+
+#####awk -F , '{if(($1~/^\"/)&&(NF==1)) printf $0; else print $0}' sbsr_us.cfa_20200326.csv      >compare.csv  用于直接修改用，还在写逻辑。先注释
+####验证sbsr数据,目前只发现由于location带有回车符导致数据错乱，所以验证是否带有回车符（验证是否有双引号），如果有，对离线设备进行删除，对在线设备进行修改
+for client in `cat ~/invoicing/all_date/client.list`
+do
+echo "sbsr_${client}_${nowaday}.csv"
+cat ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}.csv  | awk -F "," '{if($1~/^\"/) print $0}'
+done
+
+
+for client in hk.mcd au.parkassist
+do
+echo "sbsr_${client}_${nowaday}.csv"
+cat ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}.csv  | awk -F "," '{if($1~/^\"/) print $0}'
+done
+
+
+
+
+
+##hq="ssh.us.cfa.switchboardcms.com"
+##sb-ssh-hq-service ubuntu@ssh.anz.mcd.switchboardcms.com sb1 "mkdir -p /tmp/townstmp/tmp/ "
+
+###在HQ中 sbs devices 中取出所有设备，排序，去重vpn，去空格，再换成空格分隔符，再删除vpn为空的数据
+
+
+
+###~/invoicing/all_date/${nowaday}/$ cat >get_vpn.sh
+###/usr/local/bin/switchboard dev mysqlQuery "select * from device order by stamp desc" |awk -F "|" '!a[$5]++{print}' |sed s/[[:space:]]//g|awk -F "|" '{print $3" "$5}' |awk 'NR>2{if($2!="") print $0}'> /tmp/townstmp/sb_devices.tmp
+
+###cat  get_vpn.sh| gzip -cfn | base64 -w0
+###H4sIAAAAAAAAA1WOwQqCQBiE7z3FtAhWUn8UXYI6dgzqKhLrutWSurb/mkj27iV16TYz3wwM1ewot0rmlJqSuDFeXVMrXYZMP1C0fM8PtXYtBOtcK48Jzs4WPTVKw7pMO6Qt2Mui+qSsBDrZ3DDdQXQC4VDGwSqJomflTOlfITrWGZjieM2VVHqdJESXv8m3imApIIJVP+lpuD9uF09zHgWL4UaIMX6t+SvcgnxRkbdNyb3g9PT9x7OPHbwBRWB4buUAAAA=
+
+###向HQ 发送查询sql的语句并执行
+sb-ssh-hq-service ubuntu@ssh.anz.mcd.switchboardcms.com sb1 "echo  'H4sIAAAAAAAAA1WOwQqCQBiE7z3FtAhWUn8UXYI6dgzqKhLrutWSurb/mkj27iV16TYz3wwM1ewot0rmlJqSuDFeXVMrXYZMP1C0fM8PtXYtBOtcK48Jzs4WPTVKw7pMO6Qt2Mui+qSsBDrZ3DDdQXQC4VDGwSqJomflTOlfITrWGZjieM2VVHqdJESXv8m3imApIIJVP+lpuD9uF09zHgWL4UaIMX6t+SvcgnxRkbdNyb3g9PT9x7OPHbwBRWB4buUAAAA=' | base64 --decode | gzip -cfd > '/tmp/get_vpn.sh'  && chmod 755  /tmp/get_vpn.sh &&  /tmp/get_vpn.sh"
+
+###~/invoicing/all_date/${nowaday}$  cat >task_cmd.sh
+#HQ_FILE_PATH='/var/lib/switchboard/data/network.hq';UUID_FILE_PATH='/etc/uuid.switchboard';hq_modified_date="$(date --iso-8601=seconds --utc --reference=$HQ_FILE_PATH)";uuid_modified_date="$(date --iso-8601=seconds --utc --reference=$UUID_FILE_PATH)";install_date="$hq_modified_date";if [[ "$uuid_modified_date" < "$hq_modified_date" ]]; then         install_date="$uuid_modified_date"; fi;a=`hostname`;b=`sudo dmidecode -t 2|grep "Serial Number"|awk  -F : '{print $2}'` ;  c=`sudo dmidecode -t 2|grep "Product Name"|awk  -F : '{print $2}'`;d=`cat /etc/network/interfaces  |grep address|awk '{print $2}'|head -1`;e=`cat /var/lib/switchboard/data/location`; f=`echo ${install_date}|awk -F T '{print $1}'` ;fist=`echo ${d}|awk -F . '{print $1}'`;last=`echo ${d}|awk -F . '{print $4}'`;echo  "$e.${fist}.${last}|$e|$a|$d|$c|$b|$f"
+
+HQ_FILE_PATH='/var/lib/switchboard/data/network.hq';UUID_FILE_PATH='/etc/uuid.switchboard';hq_modified_date="$(date --iso-8601=seconds --utc --reference=$HQ_FILE_PATH)";uuid_modified_date="$(date --iso-8601=seconds --utc --reference=$UUID_FILE_PATH)";install_date="$hq_modified_date";if [[ "$uuid_modified_date" < "$hq_modified_date" ]]; then         install_date="$uuid_modified_date"; fi;a=`hostname`;b=`sudo dmidecode -t 2|grep "Serial Number"|awk  -F : '{print $2}'` ;  c=`sudo dmidecode -t 2|grep "Product Name"|awk  -F : '{print $2}'`;d=`cat /etc/network/interfaces  |grep address|awk '{print $2}' |head -1` ;if [ -z ${d} ];then d=`ifconfig $(cat /etc/interface.switchboard)|grep "inet addr"  |awk '{print$2}'|awk -F : '{print $2}'|head -1`; elif [ ${d} = "X.X.X.X" ]; then d=`/usr/local/bin/switchboard status |awk -F " : " '{if($1~/IP                        /) print $2}' |head -1`; fi;e=`cat /var/lib/switchboard/data/location`; f=`echo ${install_date}|awk -F T '{print $1}'` ;fist=`echo ${d}|awk -F . '{print $1}'`;last=`echo ${d}|awk -F . '{print $4}'`;echo  "$e.${fist}.${last}|$e|$a|$d|$c|$b|$f"
+
+
+###cat  task_cmd.sh| gzip -cfn | base64 -w0
+###H4sIAAAAAAAAA6VTXWvbMBR936+4GEGSB8dLGWNM88NgKwmMkrEWBiXEsnRdizpWK8kLLE5/+661JHPaZHuYDBayzz3n3A9Nvy4vZ18+L+cfr6fpIPkhbFLpPHFr7WWZG2FVooQXSY1+bez9uHwc8Jub2aejKPQyaRqtxr2wAS8flyujdKFRLYkD04gNux3iWDsTv3v7epI6lKZWjj41XtLbYoEWa4kpm/acjSLe8f8X37FrYtS186Kq9lzP7RKggNtbiNhL6Qg+wIkIWCw4+BJr2K9nGieYOBSaizQrjfO1WGHG8zRzjTKgVlpROooS9HDR3ll8gOgbWi0quGpWOdqoFet7gPgS3sNg82B17YFdbAcZcAD5N5q5NaqRHq5I8SwLV2kmhYfQ390AJPQXbSEkOoDfZEIpi84Fln48tCUKBfGE7HSlhPgnsI3awoKHGhG7Lqhdhb4DNjwIHQT60zTa+dZkIwhGpN4T7PTC+UUWBxMcsAo2gocUou/j8FDXdk0jQ0nj6AIYKaok13X/GgA10jcO9ioR6USkpIshmzwlszmcWckITtUk9B13BT577TorXpu6g6cZytKQ/f5Qbfd+rv9kPQkTUGjnDyHqgBsf43gl/gV708ECgGYex2zTMW9p70K3LcOWiZaplsmW5S0role/ALQ/VdhVBAAA
+
+###向HQ 发送需要执行的指令任务到对应目录
+sb-ssh-hq-service ubuntu@ssh.anz.mcd.switchboardcms.com sb1 "echo  'H4sIAAAAAAAAA6VTXWvbMBR936+4GEGSB8dLGWNM88NgKwmMkrEWBiXEsnRdizpWK8kLLE5/+661JHPaZHuYDBayzz3n3A9Nvy4vZ18+L+cfr6fpIPkhbFLpPHFr7WWZG2FVooQXSY1+bez9uHwc8Jub2aejKPQyaRqtxr2wAS8flyujdKFRLYkD04gNux3iWDsTv3v7epI6lKZWjj41XtLbYoEWa4kpm/acjSLe8f8X37FrYtS186Kq9lzP7RKggNtbiNhL6Qg+wIkIWCw4+BJr2K9nGieYOBSaizQrjfO1WGHG8zRzjTKgVlpROooS9HDR3ll8gOgbWi0quGpWOdqoFet7gPgS3sNg82B17YFdbAcZcAD5N5q5NaqRHq5I8SwLV2kmhYfQ390AJPQXbSEkOoDfZEIpi84Fln48tCUKBfGE7HSlhPgnsI3awoKHGhG7Lqhdhb4DNjwIHQT60zTa+dZkIwhGpN4T7PTC+UUWBxMcsAo2gocUou/j8FDXdk0jQ0nj6AIYKaok13X/GgA10jcO9ioR6USkpIshmzwlszmcWckITtUk9B13BT577TorXpu6g6cZytKQ/f5Qbfd+rv9kPQkTUGjnDyHqgBsf43gl/gV708ECgGYex2zTMW9p70K3LcOWiZaplsmW5S0role/ALQ/VdhVBAAA' | base64 --decode | gzip -cfd > '/tmp/townstmp/task_cmd.sh'  "
+
+
+
+###cat  ~/invoicing/all_date/${nowaday}/GetDataConcurrent.sh | gzip -cfn | base64 -w0
+###H4sIAAAAAAAAA6VWbW8bRRD+vr9iODukTWM7RlCJwkUEi4ioSRSF8gFRlNvcretV7vaO273YkXNShBAvgjYgKEglQq0EIqpEioSABCHxY4jd9hN/gdm7dXxxXlrgIsXn2d1nZp95ZsalZ2qJjGurXNSYWIdVKlukdIMp8KiiEMbAOswFNwwCKjzgAhaWiAjb1KMbtoN7GFwae2ssGPMc0g7jNY/HtlVTQVRTYVtIfLEI/svM5a7ZkdYG9ib3mW3FTCa+qmbG/P2YPRG+RXwujVWurnhsnbtM5ifmcWUWV64FkW0t0oDNRfian7rGAxYmak40Q9tS+ReLuKFwkzhmQtn1F6HwlEql3vZX/d17vYNfe9uf//3Hp/27B/2be3NLD++839/Z6n1263B/63D/fu/Hr/t7v/Q++Lm3d+fRg+/nlno7u70v7uPKoz+/ebj7CZ7sPTg4/P1W77sfHn+4jafRcrj/5UkMDbx773D/Jhr7d3/TX2//hC77Ox/3b3/U/3bnr633yBKVErnzbMelCmpMuTXZ5sptrYY09qpBVInMDoc0gsG2YhZqisq1FTfwqrLlEFJibisEayNMwKUC0xolCkLBdMKDMGZgGIYs6dFkMxMCDSKfwXVrYX7m1Uqn04H6VLWj/65bmr3XhGLxZEPF/iUPVAjM4wqaXHDZskhJhzRdkEC5O0hpivHEjHpQicBCD1QyE5GOr02FgmHG8DUR6opVMJ11WrUYqhUG1OCZAY/m/iP7jcivWAYQkEqin4ByceFilwxkMruiNYci02qzy/WjBX3HcjfXu77hsY3pZruFt4UMe3ZFoAk/eES8UAMscXFjMQlsJ8IXqLhQBw3Ao3TzRszwbnW8ibvGlAQVUyEDrhTzLNik7TUY70YxR3LKl9PxzFCZhbGhtZ6OO9oHb8LbiGpcpVBh78IUvPMSMiUIjDxStjR1mlc8YphLtRkqM1AJ4Q0Vc1e9Hkp1lW00WsxdQ1xbhHrtTcniq9gnhF6WujztGmqqJhLf1+uNUAjmKlOf9nNTGSCL11k84/N1Nqe1tE59+/LoSkPnf4F27BegoqDSAEhW0ZK8YtgC7DOYuBQlOX0sGabdpCNpKU1UU3j5KLgTNJQWQo/5tpPTzJsXFpdtu34RDLVT6fjTenFgCG5ARwVz3ukTkeU1rLeKTF4DuZS7GXrGwHQRfdhbx6oTafUUJ9oH87Ei/oWzQo/9ry6bHItAsCOn2BGWA8OFLjzcriWUpd52fFngDEx1lLuFOYBxbLZdqPgOMZIvIqDusdMVdR8Hx7JQRJogGBxZzq7x5BiG1z0ZwgjGE6MoYBWDwKDOj2GgIT0A/28MBawsBtxBMDnD7Oj2OOP7p/Nz1OsHwVHfP5+jk1BnhHgEPQqZMZWX1WmjBopNOGvBPALTgbNnnkqVteFM8OWu1rhpqNVhQ33eNNTsWWZ6QHgsxkOdKMZDBiTFHlzuDgdVoYYH5ZQVU+4mq50zdahzZ9ykebEQoqdyoZr0r7OnKw4HEXSJa0DIFwdDCp416G3KFRntT0VNHpvmo2lYwavlvxKLtUzya0dxiL8tpB64OIDVZORLPYVdPULOy20B1CL/APbL07y5CgAA
+
+###向HQ发送脚本并执行
+sb-ssh-hq-service ubuntu@ssh.anz.mcd.switchboardcms.com sb1 "echo  'H4sIAAAAAAAAA6VWbW/bVBT+nPsrDk5Kt66OG4SQGLiiRFSr1lZVGR8QQ7Vr3zRXta+N7/WSKrVUIcSLYCsIBtKo0CaBqCbRISGgRUj8GOpsfOIvcK7tNG76No1ESpxzz33uOc95zrmpPmfEIjJWGTcovwWrtmiT6hqV4NrShiAC2qUOOIHv29wFxmFhifCgY7v2hmmhD4UrY2+P+WOuRTpBtO6yyNQM6YeGDDpc4ING8CMz13qFR2IM7C3mUVOLqIg9Wc+M+fMxe8w9jXhMFFaxuuLSW8yhIt8xjyuzuHLDD01t0fbpXIiP+a4bzKdBLOd4KzA1mf/QiBNwJ44iyqXZeBlKr2q1mm5/3d99kB78lm5/8e+fn/XvH/Rv780tPb73QX9nK/38zuH+1uH+w/Snb/p7v6Yf/pLu3Xvy6Ie5pXRnN/3yIa48+evbx7uf4s700cHhH3fS73/856Nt3I2Ww/2vTmIo4N0Hh/u30di//7v6efdnPLK/80n/7sf973b+3nqfLNlCIHeuaTm2BINKxxAdJp32amBHbt0P9bDwsEjTH7iVq2BIW6yvOL5bF22LkCp12gFoG0EMjs2xrGEsIeBUFdwPIgoFw5AVPZxsZUKw/dCjcFNbmJ95Xe92u9CYqnfV+6am2HuDSxpNNmXkXXFBBkBdJqHFOBNtjVRVSNMlCdR6g5ImGE9EbRf0EDQ8wRa0iEjF17G5hGHF8DHm8qpWMp21W7YpqhUG1OCeAY9F/iP+hcivagUgIJVEvXyb8UuXe6Qyu6LEhupSMjNrDVJRWdV6ucJVTsc8ks1OG/ODDG12haMJv1hI3IAgX0uMry3GvmmF+AC6Aw1QACxMNtciitk0MHZnnUoBMrK58JmU1NVg0+6sw3gvjBjSUXspGc8M+iyMDa2NZNxSZ7AWvIOoxVEJ6PQ9mIJ3X0FuuFqvVIRoK4YUfehXEJQAmkGfAT2AN2XEHHktEPI63Wi2qbOOYCYP1NpbgkbXcRxwtSxUF5oGSsfgseep9WbAOXVk0YbmC1OgS9CbAPEqVjF+rcgXcDYg2QnKaPoYncWISEaIrU7UE3j16KQ8kepC4FLPtHJ2WOvS4rJpNi5DwchUMv600BaQo5FQgI7W+bzdeTh5h6l1nklhUNpaL4PMcp0uQw4n31h9IqmfgqyAqYd6veiE0th71nNaDFXKKalgdy77RbqqCdBP1bmp2tC0PFGiBQrd1nqlmYwBbHYc0D2LFGIsI6AiceqUFRn5x4guI00QjIosZ/FfHMMwz5MhjGBcGEUJqxwEBnV+DAOZqMvo/8ZQwspiQA+CxRlWR42qGc87nZ+juTsIzva88zk6CXVGiEfQo5AZU3nnnDb2oTwes+HIQlCzsTJvC5lNxkzitZ5SdTHj6sMZ96KacZVlqsazSyP07oYRehe7E5yHtd7wmsDGPGqZrGFy4Kw/zpScKlOBn+QNQYi6DEsdo/4UPV0fWIigelcBQr44uCng+QK9YzNJRqdNWX7HLtFRxlcwtfzPWbltSZ52GAV4pQt1z+G9JydDT6jLz1Ej/bwylkA18h/RAzlXMAoAAA==' | base64 --decode | gzip -cfd > '/tmp/townstmp/GetDataConcurrent.sh'  && chmod 755  /tmp/townstmp/GetDataConcurrent.sh &&  nohup /tmp/townstmp/GetDataConcurrent.sh &"
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+###部署脚本开始
+cat > /tmp/townstmp/GetDataConcurrent.sh   ###回车执行，
+
+####复制下面代码，粘贴。
+#!/usr/bin/env bash
+#get data or exec command in MP
+nowaday=`date +%Y%m%d`
+workdir="/tmp/townstmp"
+tmpdir="${workdir}/tmp"
+tmpfile="result.tmp"
+resultfile="result.unl"
+listfile="sb_devices.tmp"
+ListFileTmp="NameIpTmp.unl"
+TimeoutInfo="timeout"
+concurrent=19            ###取模并发，根据IP的最后一个字段决定该IP在哪个进程，对于大量的，且最后一个字段的模不一样的数据有效果。
+Password=`cat /etc/switchboard.mp-password`
+Cmd=`cat /tmp/townstmp/task_cmd.sh`
+
+#echo "you can input one or more devices and ip,for example \"MLAB-xxx 10.x.x.x\"    Enter,Ctrl+d to edit finish"
+#cat >${workdir}/${listfile}
+
+#read -p "please input you want concurrent count:" concurrent
+#read -p "please input the MP password:" Password
+#echo  "please input command:"
+#read  Cmd
+
+
+
+
+main(){
+	F_ListTmpName=$1
+	cat ${tmpdir}/${F_ListTmpName}|while read F_name F_ip
+do
+   PingNum=`ping -c 1 ${F_ip}|grep "1 packets transmitted" |awk '{print $6}'|awk -F % '{print $1}'`
+   if [ ${PingNum} -eq 0 ];then
+      ###-Tq用于消掉 sb1时会出现terminal的信息
+   		sshpass -p ${Password} ssh -A -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20 -Tq -t -C  ubuntu@${F_ip} "${Cmd}"  > ${tmpdir}/${tmpfile}${F_ListTmpName#*.} </dev/null
+   		#Model=`awk '{if(NR==1) print $0}' ${tmpdir}/${tmpfile}${F_ListTmpName#*.}` 
+         Model=`cat ${tmpdir}/${tmpfile}${F_ListTmpName#*.}`
+   		echo "${F_name}|${F_ip}|${Model}"  >>${tmpdir}/${resultfile%.*}.${F_ListTmpName#*.}
+   else 
+   		echo "${F_name}|${F_ip}|${TimeoutInfo}"  >>${tmpdir}/${resultfile%.*}.${F_ListTmpName#*.}
+   fi
+done
+	}
+
+Rmtmpfile(){
+TmpFileCount=`ls ${tmpdir}/ |grep "${ListFileTmp}" |wc -l`
+if [ ${TmpFileCount} -ne 0 ];then
+   rm ${tmpdir}/${ListFileTmp}*
+fi
+
+ResultFileCount=`ls ${tmpdir}/ |grep "${resultfile}" |wc -l`
+if [ ${ResultFileCount} -ne 0 ];then
+   rm ${tmpdir}/${resultfile}*
+fi
+
+ResultTmpCount=`ls ${tmpdir}/ |grep "${tmpfile}unl" |wc -l`
+if [ ${ResultFileCount} -ne 0 ];then
+   rm ${tmpdir}/${tmpfile}unl*
+fi
+   
+}
+
+
+Rmtmpfile
+
+
+
+AllResultFileCount=`ls ${workdir}/ |grep "all${resultfile}" |wc -l`
+if [ ${AllResultFileCount} -ne 0 ];then
+   rm ${workdir}/all${resultfile}
+fi
+
+cat ${workdir}/${listfile} |while read name ip 
+do
+	LastNum=`echo ${ip}|awk -F . '{print $4}'`
+	Remainder=`expr ${LastNum} % ${concurrent}`
+	echo "${name} ${ip}"  >> ${tmpdir}/${ListFileTmp}${Remainder}
+done
+
+
+for ListTmpName in `ls ${tmpdir}/ |grep "${ListFileTmp}" `
+do 
+  main ${ListTmpName} &
+done
+
+wait
+cat ${tmpdir}/${resultfile}* >${workdir}/all${resultfile}_${nowaday}
+
+Rmtmpfile
+echo "process complet,plsase check ${workdir}/all${resultfile}_${nowaday}"
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+
+
+##确认nowaday是否已经定义  nowaday="20200624"
+cd ~/invoicing/all_date/
+cat >hq.list
+ssh.anz.mcd.switchboardcms.com
+ssh.jp.mcd.switchboardcms.com
+ssh.sg.mcd.switchboardcms.com
+ssh.au.hungryjacks.switchboardcms.com
+ssh.gt.mcd.switchboardcms.com
+ssh.riyadh.sa.mcd.switchboardcms.com
+ssh.au.subway.switchboardcms.com
+ssh.au.bp.switchboardcms.com
+ssh.au.krispykreme.switchboardcms.com
+ssh.us.mcd.switchboardcms.com
+ssh.py.mcd.switchboardcms.com
+ssh.uk.merlin.switchboardcms.com
+ssh.sv.mcd.switchboardcms.com
+ssh.riyadh.subway.switchboardcms.com
+ssh.au.carlsjr.switchboardcms.com
+ssh.mo.mcd.switchboardcms.com
+ssh.hn.mcd.switchboardcms.com
+ssh.ni.mcd.switchboardcms.com
+ssh.au.merlin.switchboardcms.com
+ssh.fr.mcd.switchboardcms.com
+ssh.au.tacobell.switchboardcms.com
+ssh.pf.mcd.switchboardcms.com
+ssh.fj.mcd.switchboardcms.com
+ssh.nl.mcd.switchboardcms.com
+ssh.om.subway.switchboardcms.com
+ssh.au.tarongazoo.switchboardcms.com
+ssh.kw.subway.switchboardcms.com
+ssh.jp.legoland.switchboardcms.com
+ssh.sr.mcd.switchboardcms.com
+ssh.brn.mcd.switchboardcms.com
+ssh.us.whataburger.switchboardcms.com
+ssh.sharjah.uae.subway.switchboardcms.com
+ssh.salalah.om.subway.switchboardcms.com
+ssh.abudhabi.uae.subway.switchboardcms.com
+ssh.sg.pizzahut.switchboardcms.com
+ssh.ca.cfa.switchboardcms.com
+ssh.ca.mcd.switchboardcms.com
+ssh.us.scnbnc.switchboardcms.com
+ssh.us.cfa.switchboardcms.com
+ssh.lc.kfc.switchboardcms.com
+ssh.sg.toysrus.switchboardcms.com
+ssh.us.legoland.switchboardcms.com
+ssh.uae-subway.switchboardcms.com
+
+
+###回车， Ctrl + d  结束输入
+###部署脚本结束
+
+chmod  755 /tmp/townstmp/GetDataConcurrent.sh
+cd /tmp/townstmp/
+./GetDataConcurrent.sh
+
+####输入并发数量：19  回车    ####取余并发，vpnip尾数都是偶数，并发数为奇数比较合适。可以根据设备数的量设置并发数
+####输入密码：MP的密码   回车
+####输入指令： HQ_FILE_PATH='/var/lib/switchboard/data/network.hq';UUID_FILE_PATH='/etc/uuid.switchboard';hq_modified_date="$(date --iso-8601=seconds --utc --reference=$HQ_FILE_PATH)";uuid_modified_date="$(date --iso-8601=seconds --utc --reference=$UUID_FILE_PATH)";install_date="$hq_modified_date";if [[ "$uuid_modified_date" < "$hq_modified_date" ]]; then         install_date="$uuid_modified_date"; fi;a=`hostname`;b=`sudo dmidecode -t 2|grep "Serial Number"|awk  -F : '{print $2}'` ;  c=`sudo dmidecode -t 2|grep "Product Name"|awk  -F : '{print $2}'`;d=`cat /etc/network/interfaces  |grep address|awk '{print $2}'|head -1`;e=`cat /var/lib/switchboard/data/location`; f=`echo ${install_date}|awk -F T '{print $1}'` ;fist=`echo ${d}|awk -F . '{print $1}'`;last=`echo ${d}|awk -F . '{print $4}'`;echo  "$e.${fist}.${last}|$e|$a|$d|$c|$b|$f"
+
+
+
+
+
+
+
+cat > ~/invoicing/all_date/hq_client.list
+ssh.anz.mcd.switchboardcms.com                          anz.mcd
+ssh.jp.mcd.switchboardcms.com                           jp.mcd
+ssh.sg.mcd.switchboardcms.com                           sg.mcd
+ssh.au.hungryjacks.switchboardcms.com                   au.hungryjacks
+ssh.gt.mcd.switchboardcms.com                           gt.mcd
+ssh.riyadh.sa.mcd.switchboardcms.com                    riyadh.sa.mcd
+ssh.au.subway.switchboardcms.com                        au.subway
+ssh.au.bp.switchboardcms.com                            au.bp
+ssh.au.krispykreme.switchboardcms.com                   au.krispykreme
+ssh.us.mcd.switchboardcms.com                           us.mcd
+ssh.py.mcd.switchboardcms.com                           py.mcd
+ssh.uk.merlin.switchboardcms.com                        uk.merlin
+ssh.sv.mcd.switchboardcms.com                           sv.mcd
+ssh.riyadh.subway.switchboardcms.com                    riyadh.subway
+ssh.au.carlsjr.switchboardcms.com                       au.carlsjr
+ssh.mo.mcd.switchboardcms.com                           mo.mcd
+ssh.hn.mcd.switchboardcms.com                           hn.mcd
+ssh.ni.mcd.switchboardcms.com                           ni.mcd
+ssh.au.merlin.switchboardcms.com                        au.merlin
+ssh.fr.mcd.switchboardcms.com                           fr.mcd
+ssh.au.tacobell.switchboardcms.com                      au.tacobell
+ssh.pf.mcd.switchboardcms.com                           pf.mcd
+ssh.fj.mcd.switchboardcms.com                           fj.mcd
+ssh.nl.mcd.switchboardcms.com                           nl.mcd
+ssh.om.subway.switchboardcms.com                        om.subway
+ssh.au.tarongazoo.switchboardcms.com                    au.tarongazoo
+ssh.kw.subway.switchboardcms.com                        kw.subway
+ssh.jp.legoland.switchboardcms.com                      jp.legoland
+ssh.sr.mcd.switchboardcms.com                           sr.mcd
+ssh.brn.mcd.switchboardcms.com                          brn.mcd
+ssh.us.whataburger.switchboardcms.com                   us.whataburger
+ssh.sharjah.uae.subway.switchboardcms.com               sharjah.uae.subway
+ssh.salalah.om.subway.switchboardcms.com                salalah.om.subway
+ssh.abudhabi.uae.subway.switchboardcms.com              abudhabi.uae.subway
+ssh.sg.pizzahut.switchboardcms.com                      sg.pizzahut
+ssh.ca.cfa.switchboardcms.com                           ca.cfa
+ssh.ca.mcd.switchboardcms.com                           ca.mcd
+ssh.us.scnbnc.switchboardcms.com                        us.scnbnc
+ssh.us.cfa.switchboardcms.com                           us.cfa
+ssh.lc.kfc.switchboardcms.com                           lc.kfc
+ssh.sg.toysrus.switchboardcms.com                       sg.toysrus
+ssh.us.legoland.switchboardcms.com                      us.legoland
+ssh.uae-subway.switchboardcms.com                       uae-subway
+
+
+cat > ~/invoicing/all_date/hq_client_Dist_nz_au.list
+ssh.anz.mcd.switchboardcms.com                  anz.mcd                                    nz.mcd
+ssh.anz.mcd.switchboardcms.com                  anz.mcd                                    au.mcd
+ssh.jp.mcd.switchboardcms.com                   jp.mcd                                    jp.mcd
+ssh.sg.mcd.switchboardcms.com                   sg.mcd                                    sg.mcd
+ssh.au.hungryjacks.switchboardcms.com           au.hungryjacks                            au.hungryjacks
+ssh.gt.mcd.switchboardcms.com                   gt.mcd                                    gt.mcd
+ssh.riyadh.sa.mcd.switchboardcms.com            riyadh.sa.mcd                             riyadh.sa.mcd
+ssh.au.subway.switchboardcms.com                au.subway                                 au.subway
+ssh.au.bp.switchboardcms.com                    au.bp                                     au.bp
+ssh.au.krispykreme.switchboardcms.com           au.krispykreme                            au.krispykreme
+ssh.us.mcd.switchboardcms.com                   us.mcd                                    us.mcd
+ssh.py.mcd.switchboardcms.com                   py.mcd                                    py.mcd
+ssh.uk.merlin.switchboardcms.com                uk.merlin                                 uk.merlin
+ssh.sv.mcd.switchboardcms.com                   sv.mcd                                    sv.mcd
+ssh.riyadh.subway.switchboardcms.com            riyadh.subway                             riyadh.subway
+ssh.au.carlsjr.switchboardcms.com               au.carlsjr                                au.carlsjr
+ssh.mo.mcd.switchboardcms.com                   mo.mcd                                    mo.mcd
+ssh.hn.mcd.switchboardcms.com                   hn.mcd                                    hn.mcd
+ssh.ni.mcd.switchboardcms.com                   ni.mcd                                    ni.mcd
+ssh.au.merlin.switchboardcms.com                au.merlin                                 au.merlin
+ssh.fr.mcd.switchboardcms.com                   fr.mcd                                    fr.mcd
+ssh.au.tacobell.switchboardcms.com              au.tacobell                               au.tacobell
+ssh.pf.mcd.switchboardcms.com                   pf.mcd                                    pf.mcd
+ssh.fj.mcd.switchboardcms.com                   fj.mcd                                    fj.mcd
+ssh.nl.mcd.switchboardcms.com                   nl.mcd                                    nl.mcd
+ssh.om.subway.switchboardcms.com                om.subway                                 om.subway
+ssh.au.tarongazoo.switchboardcms.com            au.tarongazoo                             au.tarongazoo
+ssh.kw.subway.switchboardcms.com                kw.subway                                 kw.subway
+ssh.jp.legoland.switchboardcms.com              jp.legoland                               jp.legoland
+ssh.sr.mcd.switchboardcms.com                   sr.mcd                                    sr.mcd
+ssh.brn.mcd.switchboardcms.com                  brn.mcd                                   brn.mcd
+ssh.us.whataburger.switchboardcms.com           us.whataburger                            us.whataburger
+ssh.sharjah.uae.subway.switchboardcms.com       sharjah.uae.subway                        sharjah.uae.subway
+ssh.salalah.om.subway.switchboardcms.com        salalah.om.subway                         salalah.om.subway
+ssh.abudhabi.uae.subway.switchboardcms.com      abudhabi.uae.subway                       abudhabi.uae.subway
+ssh.sg.pizzahut.switchboardcms.com              sg.pizzahut                               sg.pizzahut
+ssh.ca.cfa.switchboardcms.com                   ca.cfa                                    ca.cfa
+ssh.ca.mcd.switchboardcms.com                   ca.mcd                                    ca.mcd
+ssh.us.scnbnc.switchboardcms.com                us.scnbnc                                 us.scnbnc
+ssh.us.cfa.switchboardcms.com                   us.cfa                                    us.cfa
+ssh.lc.kfc.switchboardcms.com                   lc.kfc                                    lc.kfc
+ssh.sg.toysrus.switchboardcms.com               sg.toysrus                                sg.toysrus
+ssh.us.legoland.switchboardcms.com              us.legoland                               us.legoland
+ssh.uae-subway.switchboardcms.com               uae-subway                                uae-subway
+
+
+
+
+
+
+
+
+
+
+cat > ~/invoicing/all_date/create_manual_each.sh
+hq=$1
+client=$2
+
+nowaday=$3
+oldday=$4
+
+newdir="/home/coates/invoicing/all_date/${nowaday}"
+olddir="/home/coates/invoicing/all_date/${oldday}"
+
+newsbsr="${newdir}/data_sbsr"
+oldsbsr="${olddir}/data_sbsr"
+
+newsbdv="${newdir}/data_sbdv"
+oldsbdv="${olddir}/data_sbdv"
+
+neweach="${newdir}/each"
+oldeach="${olddir}/each"
+
+newresultcsv="${newdir}/result_csv"
+oldresultcsv="${olddir}/result_csv"
+
+neweachtmp="${newdir}/eachtmp"
+oldeachtmp="${olddir}/eachtmp"
+
+
+newtmp="${newdir}/tmp"
+oldtmp="${olddir}/tmp"
+
+
+
+new_sbsr_file="${newsbsr}/code.ip_sbsr_${client}_${nowaday}.csv"
+old_sbsr_file="${oldsbsr}/code.ip_sbsr_${client}_${oldday}.csv"
+
+new_sbdv_file="${newsbdv}/VPN_SN_${client}_${nowaday}.csv"
+old_sbdv_file="${oldsbdv}/VPN_SN_${client}_${oldday}.csv"
+
+new_each_file="${neweach}/Each-Device-${client}-${nowaday}.csv"
+old_each_file="${oldeach}/Each-Device-${client}-${oldday}.csv"
+
+new_each_tmp_file="${newtmp}/Each-Device-tmp-${client}-${nowaday}.csv"
+old_each_tmp_file="${oldtmp}/Each-Device-tmp-${client}-${oldday}.csv"
+
+new_each_manual_file="${neweachtmp}/Each-Device-manual-${client}-${nowaday}.csv"
+old_each_manual_file="${oldeachtmp}/Each-Device-manual-${client}-${oldday}.csv"
+
+new_add_tmp_file1="${newtmp}/additional_tmp1_${client}_${nowaday}.csv"
+old_add_tmp_file1="${oldtmp}/additional_tmp1_${client}_${oldday}.csv"
+
+new_add_tmp_file2="${newtmp}/additional_tmp2_${client}_${nowaday}.csv"
+old_add_tmp_file2="${oldtmp}/additional_tmp2_${client}_${oldday}.csv"
+
+new_add_tmp_file3="${newtmp}/additional_tmp3_${client}_${nowaday}.csv"
+old_add_tmp_file3="${oldtmp}/additional_tmp3_${client}_${oldday}.csv"
+
+new_add_file="${newtmp}/additional_${client}_${nowaday}.csv"
+old_add_file="${oldtmp}/additional_${client}_${oldday}.csv"
+
+new_add_vpn_file="${newtmp}/additional_vpn_${client}_${nowaday}.csv"
+old_add_vpn_file="${oldtmp}/additional_vpn_${client}_${oldday}.csv"
+
+new_date_tmp="${newtmp}/date_tmp_${client}_${nowaday}.csv"
+old_date_tmp="${oldtmp}/date_tmp_${client}_${oldday}.csv"
+
+new_each_tmp1_file="${newtmp}/each_tmp1_${client}_${nowaday}.csv"
+old_each_tmp1_file="${oldtmp}/each_tmp1_${client}_${oldday}.csv"
+
+new_each_tmp2_file="${newtmp}/each_tmp2_${client}_${nowaday}.csv"
+old_each_tmp2_file="${oldtmp}/each_tmp2_${client}_${oldday}.csv"
+
+new_tmp_location_file="${newtmp}/tmp_location_${client}_${nowaday}.csv"
+old_tmp_location_file="${oldtmp}/tmp_location_${client}_${oldday}.csv"
+
+new_tmp_name_file="${newtmp}/tmp_name_${client}_${nowaday}.csv"
+old_tmp_name_file="${oldtmp}/tmp_name_${client}_${oldday}.csv"
+
+new_tmp_location_name_file="${newtmp}/tmp_location_name_${client}_${nowaday}.csv"
+old_tmp_location_name_file="${oldtmp}/tmp_location_name_${client}_${oldday}.csv"
+
+new_tmp_notfull_name_file="${newtmp}/tmp_notfull_name_${client}_${nowaday}.csv"
+old_tmp_notfull_name_file="${oldtmp}/tmp_notfull_name_${client}_${oldday}.csv"
+
+
+new_result_no_name_file="${newtmp}/result_no_name_${client}_${nowaday}.csv"
+old_result_no_name_file="${oldtmp}/result_no_name_${client}_${oldday}.csv"
+
+new_result_no_full_name_file="${newtmp}/result_no_full_name_${client}_${nowaday}.csv"
+old_result_no_full_name_file="${oldtmp}/result_no_full_name_${client}_${oldday}.csv"
+
+new_result_csv_file="${newresultcsv}/DeviceList-Invoicing-${client}-${nowaday}.csv"
+old_result_csv_file="${oldresultcsv}/DeviceList-Invoicing-${client}-${oldday}.csv"
+
+
+
+
+new_sbdv_minus="${newtmp}/VPN_SN_minus_timeout_${client}_${nowaday}.csv"
+old_sbdv_minus="${oldtmp}/VPN_SN_minus_timeout_${client}_${oldday}.csv"
+
+new_each_full_replace="${newtmp}/each_full_replace_${client}_${nowaday}.csv"
+old_each_full_replace="${oldtmp}/each_full_replace_${client}_${oldday}.csv"
+
+
+####比较新的sbsr数据比老的sbsr数据多出来的部分
+
+####新sbsr数据(new)有，旧sbsr数据(old)上没有的记录。
+####第一次生成一份对比code.ip 列多出来的数据
+awk  -F "," 'NR==FNR{a[$1]}NR>FNR{ if(!($1 in a)) print $0}' ${old_sbsr_file}  ${new_sbsr_file}   >   ${new_add_tmp_file1}
+
+###第二次用多出来的数据，第一列可能存在device name 的情况，用device name 再对比一次,判断NF=14，14为location name没有包含逗号的，为了区分location name是否包含逗号
+
+awk  -F "," 'NR==FNR{a[$3]}NR>FNR{ if(!($1 in a)) print $0}' ${old_sbsr_file}  ${new_add_tmp_file1} |awk -F ,    '{
+if(NF==14){
+cuttime=substr($8,1,10) ;print $1","$2","$3",,"$6","$7",,,"cuttime",,,"$9
+}
+else{
+cuttime=substr($7,1,10) ;print $1","$2","$3",,"$5","$6",,,"cuttime",,,"$8
+}
+}' |sed "s/\"//g" >${new_add_tmp_file2}
+
+###第三次用多出来的数据跟each表对(为了适应DHCP 的ip变化，需要匹配device name,)  对出   ${new_add_tmp_file2} 有，老的each表${old_each_file} 没有的数据
+awk  -F "," 'NR==FNR{a[$1];b[$3]}NR>FNR{ if(!($1 in a)) {
+if(!($3 in b)) {
+print $0
+}
+}
+}' ${old_each_file}  ${new_add_tmp_file2}   >   ${new_add_tmp_file3}
+
+
+
+###单独取出时间字段转换成时间戳,再合并到原文件中,根据时间排序去重，留下时间比较老的记录。再删除最后一个字段,然后重定向到文件
+if [ -s ${new_add_tmp_file3} ];then
+rm ${new_date_tmp}
+awk -F , '{print $9}' ${new_add_tmp_file3} |while read d_date; do date -d "${d_date}" +%s   >> ${new_date_tmp}; done
+paste -d "|" ${new_add_tmp_file3} ${new_date_tmp}   |sort -t '|' -k2 |sort -t ','  -k 1,1  -u  |awk -F \| '{print $1}'   >  ${new_add_file}
+###合并老的each file 和新增的机器，用“below is add” 分隔开
+cat ${old_each_file}  >  ${new_each_tmp1_file}
+echo "below_is_add"  >>  ${new_each_tmp1_file}
+cat ${new_add_file}  >>  ${new_each_tmp1_file}
+else
+cat ${old_each_file}  >  ${new_each_tmp1_file}
+fi
+
+###开始处理临时each文件  ${new_each_tmp1_file}， 从vpn文件中拿最新的数据，用第一列作为关键词
+###${new_each_tmp1_file}  先把Install Date Current 的时间移到  Previous
+
+awk -F , '{
+if(($1!="below_is_add")&&($1!="Location.Code.ip")) {
+print $1","$2","$3","$4","$5","$6","$7","$8","$9",,"$10","$12
+}
+else {
+print $0
+}
+}'  ${new_each_tmp1_file}  >${new_each_tmp2_file}
+
+
+###先把${new_sbdv_file}  timeout和空值的去掉
+awk -F  , '{if(($3!="timeout")&&($3!="")) print $0}'  ${new_sbdv_file}   > ${new_sbdv_minus}
+
+
+###从${new_sbdv_minus}中的code.ip 找到${new_each_tmp2_file}中的数据，找到则替换和补充，再找device name， 找不到则保持原来，
+if [ -s ${new_sbdv_minus} ];then
+awk  -F "," 'NR==FNR{
+vpn[$3]=$2;code_ip[$3]=$3;code[$3]=$4;device[$3]=$5;local_ip[$3]=$6;model[$3]=$7;sn[$3]=$8;output_date[$3]=$9;vpn[$5]=$2;code_ip[$5]=$3;code[$5]=$4;device[$5]=$5;local_ip[$5]=$6;model[$5]=$7;sn[$5]=$8;output_date[$5]=$9
+}
+NR>FNR{
+if(!($1 in code_ip)) {
+if(!($3 in device)) {
+print $0
+}
+else{
+print code_ip[$3]","code[$3]","device[$3]","$4","local_ip[$3]","vpn[$3]","model[$3]","sn[$3]","$9","output_date[$3]","$11","$12
+}
+}
+else {
+print code_ip[$1]","code[$1]","device[$1]","$4","local_ip[$1]","vpn[$1]","model[$1]","sn[$1]","$9","output_date[$1]","$11","$12
+
+}
+
+}' ${new_sbdv_minus}  ${new_each_tmp2_file}   >  ${new_each_full_replace}
+
+else 
+cat ${new_each_tmp2_file} >  ${new_each_full_replace}
+fi
+
+####${new_each_tmp2_file}
+###找到${new_sbdv_minus} 中有, 但是${new_each_full_replace} 没有的数据，这里的数据是可能机器在线，没有报告的机器。也有可能是换了机器，IP 改变的机器，所以需要匹配完code.ip 后还要匹配device name    按照each的格式输出并合并
+awk  -F "," 'NR==FNR{a[$1];b[$3]}NR>FNR{ if(!($3 in a)) {
+if(!($5 in b)){
+print $0
+}
+}
+}' ${new_each_full_replace}  ${new_sbdv_minus}   |awk -F , '{print $3","$4","$5",,"$6","$2","$7","$8","$9","$9",,"}' >   ${new_add_vpn_file}
+
+
+
+
+if [ -s ${new_add_vpn_file} ];then
+cat ${new_each_full_replace}  >  ${new_each_tmp_file}
+echo "below_is_sbdv_data_add"  >>  ${new_each_tmp_file}
+cat ${new_add_vpn_file}  >>  ${new_each_tmp_file}
+else
+cat ${new_each_full_replace}  >  ${new_each_tmp_file}
+fi
+
+
+
+###如果$7 不是 NUC7i3DNB 的， 删掉 $8
+awk -F , '{if(($7~/NUC7i3DNB/)||($7=="model")||($1=="below_is_add")||($1=="below_is_sbdv_data_add")) {
+print $0 
+}
+else {
+print $1","$2","$3","$4","$5","$6","$7",,"$9","$10","$11","$12
+}
+}'  ${new_each_tmp_file}   >  ${new_each_manual_file}
+
+##if no add ,then move manual to each .
+if_add_data=`grep -E "below_is_add|below_is_sbdv_data_add"  ${new_each_manual_file} `
+if [ -z "${if_add_data}" ];then
+mv ${new_each_manual_file}  ${new_each_file}
+fi
+
+
+
+
+
+
+
+
+
+
+
+
+cat >~/invoicing/all_date/create_manual_invoicing.sh
+hq=$1
+client=$2
+client_dist=$3
+
+nowaday=$4
+oldday=$5
+
+newdir="/home/coates/invoicing/all_date/${nowaday}"
+olddir="/home/coates/invoicing/all_date/${oldday}"
+
+newsbsr="${newdir}/data_sbsr"
+oldsbsr="${olddir}/data_sbsr"
+
+newsbdv="${newdir}/data_sbdv"
+oldsbdv="${olddir}/data_sbdv"
+
+neweach="${newdir}/each"
+oldeach="${olddir}/each"
+
+newresultcsv="${newdir}/result_csv"
+oldresultcsv="${olddir}/result_csv"
+
+neweachtmp="${newdir}/eachtmp"
+oldeachtmp="${olddir}/eachtmp"
+
+
+newtmp="${newdir}/tmp"
+oldtmp="${olddir}/tmp"
+
+
+new_sbsr_file="${newsbsr}/code.ip_sbsr_${client}_${nowaday}.csv"
+old_sbsr_file="${oldsbsr}/code.ip_sbsr_${client}_${oldday}.csv"
+
+new_sbdv_file="${newsbdv}/VPN_SN_${client}_${nowaday}.csv"
+old_sbdv_file="${oldsbdv}/VPN_SN_${client}_${oldday}.csv"
+
+new_each_file="${neweach}/Each-Device-${client_dist}-${nowaday}.csv"
+old_each_file="${oldeach}/Each-Device-${client_dist}-${oldday}.csv"
+
+new_each_tmp_file="${newtmp}/Each-Device-tmp-${client}-${nowaday}.csv"
+old_each_tmp_file="${oldtmp}/Each-Device-tmp-${client}-${oldday}.csv"
+
+new_each_manual_file="${neweachtmp}/Each-Device-manual-${client}-${nowaday}.csv"
+old_each_manual_file="${oldeachtmp}/Each-Device-manual-${client}-${oldday}.csv"
+
+new_add_tmp_file1="${newtmp}/additional_tmp1_${client}_${nowaday}.csv"
+old_add_tmp_file1="${oldtmp}/additional_tmp1_${client}_${oldday}.csv"
+
+new_add_tmp_file2="${newtmp}/additional_tmp2_${client}_${nowaday}.csv"
+old_add_tmp_file2="${oldtmp}/additional_tmp2_${client}_${oldday}.csv"
+
+new_add_tmp_file3="${newtmp}/additional_tmp3_${client}_${nowaday}.csv"
+old_add_tmp_file3="${oldtmp}/additional_tmp3_${client}_${oldday}.csv"
+
+new_add_file="${newtmp}/additional_${client}_${nowaday}.csv"
+old_add_file="${oldtmp}/additional_${client}_${oldday}.csv"
+
+new_add_vpn_file="${newtmp}/additional_vpn_${client}_${nowaday}.csv"
+old_add_vpn_file="${oldtmp}/additional_vpn_${client}_${oldday}.csv"
+
+new_date_tmp="${newtmp}/date_tmp_${client}_${nowaday}.csv"
+old_date_tmp="${oldtmp}/date_tmp_${client}_${oldday}.csv"
+
+new_each_tmp1_file="${newtmp}/each_tmp1_${client}_${nowaday}.csv"
+old_each_tmp1_file="${oldtmp}/each_tmp1_${client}_${oldday}.csv"
+
+new_each_tmp2_file="${newtmp}/each_tmp2_${client}_${nowaday}.csv"
+old_each_tmp2_file="${oldtmp}/each_tmp2_${client}_${oldday}.csv"
+
+new_tmp_location_file="${newtmp}/tmp_location_${client}_${nowaday}.csv"
+old_tmp_location_file="${oldtmp}/tmp_location_${client}_${oldday}.csv"
+
+new_tmp_name_file="${newtmp}/tmp_name_${client}_${nowaday}.csv"
+old_tmp_name_file="${oldtmp}/tmp_name_${client}_${oldday}.csv"
+
+new_tmp_location_name_file="${newtmp}/tmp_location_name_${client}_${nowaday}.csv"
+old_tmp_location_name_file="${oldtmp}/tmp_location_name_${client}_${oldday}.csv"
+
+new_tmp_notfull_name_file="${newtmp}/tmp_notfull_name_${client}_${nowaday}.csv"
+old_tmp_notfull_name_file="${oldtmp}/tmp_notfull_name_${client}_${oldday}.csv"
+
+
+new_result_no_name_file="${newtmp}/result_no_name_${client}_${nowaday}.csv"
+old_result_no_name_file="${oldtmp}/result_no_name_${client}_${oldday}.csv"
+
+new_result_no_full_name_file="${newtmp}/result_no_full_name_${client}_${nowaday}.csv"
+old_result_no_full_name_file="${oldtmp}/result_no_full_name_${client}_${oldday}.csv"
+
+new_result_csv_file="${newresultcsv}/DeviceList-Invoicing-${client_dist}-${nowaday}.csv"
+old_result_csv_file="${oldresultcsv}/DeviceList-Invoicing-${client_dist}-${oldday}.csv"
+
+
+
+
+new_sbdv_minus="${newtmp}/VPN_SN_minus_timeout_${client}_${nowaday}.csv"
+old_sbdv_minus="${oldtmp}/VPN_SN_minus_timeout_${client}_${oldday}.csv"
+
+new_each_full_replace="${newtmp}/each_full_replace_${client}_${nowaday}.csv"
+old_each_full_replace="${oldtmp}/each_full_replace_${client}_${oldday}.csv"
+
+new_exist_location_name_sbsr="${newtmp}/location_name_${client}_${nowaday}"  
+old_exist_location_name_sbsr="${oldtmp}/location_name_${client}_${oldday}"
+
+dos2unix  ${new_each_file}
+
+##先整理格式，再匹配location_name
+##按照顺序 FC|DK|McC|DT|CNB|DCB|Other
+awk -F , -v OFS=","  'NR>1{
+if            ($12=="FC")     print $2,$4",,"$5,$7,$8,$9,$10,$11,"1,0,0,0,0,0,0,0,0,0"
+else if       ($12=="DK")     print $2,$4",,"$5,$7,$8,$9,$10,$11,"0,1,0,0,0,0,0,0,0,0"
+else if       ($12=="McC")    print $2,$4",,"$5,$7,$8,$9,$10,$11,"0,0,1,0,0,0,0,0,0,0"
+else if       ($12=="DT")     print $2,$4",,"$5,$7,$8,$9,$10,$11,"0,0,0,1,0,0,0,0,0,0"
+else if       ($12=="CNB")    print $2,$4",,"$5,$7,$8,$9,$10,$11,"0,0,0,0,1,0,0,0,0,0"
+else if       ($12=="DCB")    print $2,$4",,"$5,$7,$8,$9,$10,$11,"0,0,0,0,0,1,0,0,0,0"
+else if       ($12=="OCS")    print $2,$4",,"$5,$7,$8,$9,$10,$11,"0,0,0,0,0,0,1,0,0,0"
+else if       ($12=="CFS")    print $2,$4",,"$5,$7,$8,$9,$10,$11,"0,0,0,0,0,0,0,1,0,0"
+else if       ($12=="LED")    print $2,$4",,"$5,$7,$8,$9,$10,$11,"0,0,0,0,0,0,0,0,1,0"
+else if       ($12=="Other")  print $2,$4",,"$5,$7,$8,$9,$10,$11,"0,0,0,0,0,0,0,0,0,1"
+else                          print $2,$4",,"$5,$7,$8,$9,$10,$11,"0,0,0,0,0,0,0,0,0,1"
+}' ${new_each_file}    >  ${new_result_no_name_file}
+
+
+
+#awk '{if(!(($0~/unknow/)||($0~/No Location/))) print $0}'  ${new_sbsr_file}   >  ${new_exist_location_name_sbsr}   
+
+##需要分成有双引号和没有双引号的来看
+
+
+#awk 'NR==FNR&&NR>1{
+#if(NF==14){
+##按loation name有逗号的来写
+#a[$2]=$4","$5
+#}
+#else{
+###按没有逗号的来写
+#if($4~/\"/){
+#a[$2]=$4"\""
+#}else{
+#a[$2]=$4
+#}
+#}
+#}
+#NR>FNR{
+#if($1 in a) print $1","$2","a[$1]","$4","$5","$6","$7","$8","$9","$10","$11 ","$12 ","$13 ","$14","$15","$16","$17","$18","$19
+#else print $1","$2",,"$4","$5","$6","$7","$8","$9","$10","$11 ","$12 ","$13 ","$14","$15","$16","$17","$18","$19
+#}'  FS="," ${new_exist_location_name_sbsr}  FS="," ${new_result_no_name_file}  >${new_result_csv_file}
+
+
+awk 'NR==FNR&&NR>1{
+a[$1]=$2
+}
+NR>FNR{
+if($1 in a) print $1","$2","a[$1]","$4","$5","$6","$7","$8","$9","$10","$11 ","$12 ","$13 ","$14","$15","$16","$17","$18","$19
+else print $1","$2",,"$4","$5","$6","$7","$8","$9","$10","$11 ","$12 ","$13 ","$14","$15","$16","$17","$18","$19
+}'  FS="|" ${new_exist_location_name_sbsr}  FS="," ${new_result_no_name_file}  >${new_result_csv_file}
+
+
+total_site=`awk -F , '{a[$1]=a[$1]+1}END{for(i in a) print i}' ${new_result_csv_file}|wc -l`
+total_FC=`awk -F , '{if(NF==20){print $11}else{print $10}}'  ${new_result_csv_file}  |awk '{sum+=$1}END{print sum}'`
+total_DK=`awk -F , '{if(NF==20){print $12}else{print $11}}'  ${new_result_csv_file}  |awk '{sum+=$1}END{print sum}'`
+total_McC=`awk -F , '{if(NF==20){print $13}else{print $12}}'  ${new_result_csv_file}  |awk '{sum+=$1}END{print sum}'`
+total_DT=`awk -F , '{if(NF==20){print $14}else{print $13}}'  ${new_result_csv_file}  |awk '{sum+=$1}END{print sum}'`
+total_CNB=`awk -F , '{if(NF==20){print $15}else{print $14}}'  ${new_result_csv_file}  |awk '{sum+=$1}END{print sum}'`
+total_DCB=`awk -F , '{if(NF==20){print $16}else{print $15}}'  ${new_result_csv_file}  |awk '{sum+=$1}END{print sum}'`
+total_OCS=`awk -F , '{if(NF==20){print $17}else{print $16}}'  ${new_result_csv_file}  |awk '{sum+=$1}END{print sum}'`
+total_CFS=`awk -F , '{if(NF==20){print $18}else{print $17}}'  ${new_result_csv_file}  |awk '{sum+=$1}END{print sum}'`
+total_LED=`awk -F , '{if(NF==20){print $19}else{print $18}}'  ${new_result_csv_file}  |awk '{sum+=$1}END{print sum}'`
+total_Other=`awk -F , '{if(NF==20){print $20}else{print $19}}'  ${new_result_csv_file}  |awk '{sum+=$1}END{print sum}'`
+
+total_ODMB=`expr ${total_DT} + ${total_OCS} + ${total_CFS}`
+total_MP=`expr ${total_FC} + ${total_DK} + ${total_McC} + ${total_DT} + ${total_CNB} + ${total_DCB} + ${total_OCS} + ${total_CFS} + ${total_LED} + ${total_Other}`
+total_IDBM=`expr ${total_FC} + ${total_DK} + ${total_McC} + ${total_CNB} + ${total_DCB} + ${total_LED} + ${total_Other}`
+
+echo "" >> ${new_result_csv_file}
+echo "" >> ${new_result_csv_file}
+echo "Total Site #,,,,,,,,,FC,DK,McC,DT,CNB,DCB,OCS,CFS,LED,Other"  >> ${new_result_csv_file}
+echo "${total_site},,,,,,,,,${total_FC},${total_DK},${total_McC},${total_DT},${total_CNB},${total_DCB},${total_OCS},${total_CFS},${total_LED},${total_Other}"  >> ${new_result_csv_file}
+echo "" >> ${new_result_csv_file}
+echo "Location,IDMB,ODMB,Total MP"  >> ${new_result_csv_file}
+echo "${total_site},${total_IDBM},${total_ODMB},${total_MP}"  >> ${new_result_csv_file}
+
+####首行插入列名
+sed  -i '1 i\location_code,state,Location Name,ip,Product_name,S/N,Install Date (Invoicing),Install Date (SB Output) Current,Install Date (SB Output) Previous,FC,DK,McC,DT,CNB,DCB,OCS,CFS,LED,Other'   ${new_result_csv_file}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+cat > ~/invoicing/all_date/merge_global.py
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+#############################################################
+#############################################################
+##### Extract Report Constraints Vilations     ##############
+#############################################################
+#############################################################
+
+import re
+import os
+import sys
+import csv
+import glob
+import gzip
+import time
+from datetime import datetime
+
+reload(sys)
+sys.setdefaultencoding('utf8')
+ 
+sys.path.append("/data/nishome/donghua.gu/scripts_gdh/pym")
+ 
+import xlwt
+import xlsxwriter
+
+
+
+def get_num(result_csv_file):
+  with open(result_csv_file) as csvfile:
+    mLines = csvfile.readlines()
+    targetLine = mLines[-1]
+    global a
+    a = int(targetLine.split(',')[0])
+    global b
+    b = int(targetLine.split(',')[1])
+    global c
+    c = int(targetLine.split(',')[2])
+    global d
+    d = int(targetLine.split(',')[3])
+
+
+
+def merge_csv2xlsx(csv_dir, xlsxfile):
+  # Create a new workbook and add a worksheet
+  workbook = xlsxwriter.Workbook(xlsxfile)
+  fmt_plain = workbook.add_format({
+      'font_size':  11,
+      'font_name':  "Calibri",
+      'border' : 1,
+  })
+
+  fmt_plain_date_formate = workbook.add_format({
+      'font_size':  11,
+      'font_name':  "Calibri",
+      'border' : 1,
+      'num_format': 'dd/mm/yyyy',
+
+  })
+
+
+  fmt_plain_fg = workbook.add_format({
+      'font_size':  11,
+      'font_name':  "Calibri",
+      'border' : 1,
+      'fg_color' : '#FFFF00',
+  })
+
+  workfomat_bold = workbook.add_format({
+    'bold' : True,
+    'font_size':  18,
+  })
+
+  workfomat_border = workbook.add_format({
+    'border' : 1,
+  })
+
+  workfomat_border_url = workbook.add_format({
+    'border' : 1,
+    'font_color' : '#0000FF',
+  })  
+
+  zero_fill_au_mcd = workbook.add_format({
+    'bold' : True,
+    'border' : 1,
+    'font_color' : '#0000FF',
+    })
+
+  date_format = workbook.add_format({'num_format': 'dd/mm/yyyy'})
+
+  fmt_plain = fmt_plain
+  #workbook = xlwt.Workbook(xlsxfile)
+  ws_names = []
+
+
+  sheet_name = "global"
+  worksheet = workbook.add_worksheet(sheet_name)
+  num_format = workbook.add_format({'num_format': '0'})
+  ###row,col,1st row,1st col.    according row to write
+  worksheet.write_row(0,0,['Switchboard Deployment Client List'],workfomat_bold)
+  worksheet.write_row(1,0,['ID','Region','Client','Sub-list','Location','MP of IDMB','MP of ODMB','Total MP'
+],workfomat_border)
+  get_num("./result_csv/DeviceList-Invoicing-au.mcd-" + nowaday + ".csv")
+  worksheet.write_row(2,0,[1,'ANZ','MCD Australia','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(2, 3, "internal:%s!A1" % ("au.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-nz.mcd-" + nowaday + ".csv")
+  worksheet.write_row(3,0,[2,'ANZ','MCD New Zealand','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(3, 3, "internal:%s!A1" % ("nz.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-jp.mcd-" + nowaday + ".csv")
+  worksheet.write_row(4,0,[3,'Japan','MCD Japan','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(4, 3, "internal:%s!A1" % ("jp.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-sg.mcd-" + nowaday + ".csv")
+  worksheet.write_row(5,0,[4,'Singapore','MCD Sigapore','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(5, 3, "internal:%s!A1" % ("sg.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-au.hungryjacks-" + nowaday + ".csv")
+  worksheet.write_row(6,0,[5,'Oceania','HUNGRYJACKS AU','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(6, 3, "internal:%s!A1" % ("au.hungryjacks"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-gt.mcd-" + nowaday + ".csv")
+  worksheet.write_row(7,0,[6,'America','MCD Guatemala','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(7, 3, "internal:%s!A1" % ("gt.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-riyadh.sa.mcd-" + nowaday + ".csv")
+  worksheet.write_row(8,0,[7,'Europe-MEA','MCD Riyadh','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(8, 3, "internal:%s!A1" % ("riyadh.sa.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-au.subway-" + nowaday + ".csv")
+  worksheet.write_row(9,0,[8,'Oceania','SUBWAY AU','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(9, 3, "internal:%s!A1" % ("au.subway"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-au.bp-" + nowaday + ".csv")
+  worksheet.write_row(10,0,[9,'Oceania','BP AU','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(10, 3, "internal:%s!A1" % ("au.bp"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-nl.mcd-" + nowaday + ".csv")
+  worksheet.write_row(11,0,[10,'Europe-MEA','MCD Netherlands','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(11, 3, "internal:%s!A1" % ("nl.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-au.krispykreme-" + nowaday + ".csv")
+  worksheet.write_row(12,0,[11,'Oceania','KRISPYKREME AU','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(12, 3, "internal:%s!A1" % ("au.krispykreme"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-us.mcd-" + nowaday + ".csv")
+  worksheet.write_row(13,0,[12,'America','MCD US','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(13, 3, "internal:%s!A1" % ("us.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-py.mcd-" + nowaday + ".csv")
+  worksheet.write_row(14,0,[13,'America','MCD Paraguay','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(14, 3, "internal:%s!A1" % ("py.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-uk.merlin-" + nowaday + ".csv")
+  worksheet.write_row(15,0,[14,'Europe-MEA','MERLIN UK','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(15, 3, "internal:%s!A1" % ("uk.merlin"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-sv.mcd-" + nowaday + ".csv")
+  worksheet.write_row(16,0,[15,'America','MCD El Salvador','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(16, 3, "internal:%s!A1" % ("sv.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-riyadh.subway-" + nowaday + ".csv")
+  worksheet.write_row(17,0,[16,'Europe-MEA','Subway Riyadh','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(17, 3, "internal:%s!A1" % ("riyadh.subway"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-au.carlsjr-" + nowaday + ".csv")
+  worksheet.write_row(18,0,[17,'Oceania','CARLSJR AU','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(18, 3, "internal:%s!A1" % ("au.carlsjr"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-mo.mcd-" + nowaday + ".csv")
+  worksheet.write_row(19,0,[18,'Japan','MCD MACAU','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(19, 3, "internal:%s!A1" % ("mo.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-hn.mcd-" + nowaday + ".csv")
+  worksheet.write_row(20,0,[19,'America','MCD Honduras','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(20, 3, "internal:%s!A1" % ("hn.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-ni.mcd-" + nowaday + ".csv")
+  worksheet.write_row(21,0,[20,'America','MCD Nicaragua','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(21, 3, "internal:%s!A1" % ("ni.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-au.merlin-" + nowaday + ".csv")
+  worksheet.write_row(22,0,[21,'Oceania','MERLIN AU','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(22, 3, "internal:%s!A1" % ("au.merlin"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-fr.mcd-" + nowaday + ".csv")
+  worksheet.write_row(23,0,[22,'Europe-MEA','MCD France','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(23, 3, "internal:%s!A1" % ("fr.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-au.tacobell-" + nowaday + ".csv")
+  worksheet.write_row(24,0,[23,'Oceania','TACOBELL AU','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(24, 3, "internal:%s!A1" % ("au.tacobell"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-pf.mcd-" + nowaday + ".csv")
+  worksheet.write_row(25,0,[24,'Oceania','MCD French Polynesia','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(25, 3, "internal:%s!A1" % ("pf.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-fj.mcd-" + nowaday + ".csv")
+  worksheet.write_row(26,0,[25,'Oceania','MCD Fiji','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(26, 3, "internal:%s!A1" % ("fj.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-om.subway-" + nowaday + ".csv")
+  worksheet.write_row(27,0,[26,'Europe-MEA','Subway Oman','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(27, 3, "internal:%s!A1" % ("om.subway"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-au.tarongazoo-" + nowaday + ".csv")
+  worksheet.write_row(28,0,[27,'Oceania','TARONGAZOO AU','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(28, 3, "internal:%s!A1" % ("au.tarongazoo"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-kw.subway-" + nowaday + ".csv")
+  worksheet.write_row(29,0,[28,'Europe-MEA','Subway Kuwait','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(29, 3, "internal:%s!A1" % ("kw.subway"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-jp.legoland-" + nowaday + ".csv")
+  worksheet.write_row(30,0,[29,'Japan','LEGOLAND Japan','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(30, 3, "internal:%s!A1" % ("jp.legoland"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-sr.mcd-" + nowaday + ".csv")
+  worksheet.write_row(31,0,[30,'America','MCD Suriname','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(31, 3, "internal:%s!A1" % ("sr.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-brn.mcd-" + nowaday + ".csv")
+  worksheet.write_row(32,0,[31,'Singapore','MCD Brunei','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(32, 3, "internal:%s!A1" % ("brn.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-us.whataburger-" + nowaday + ".csv")
+  worksheet.write_row(33,0,[32,'America','Whataburger US','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(33, 3, "internal:%s!A1" % ("us.whataburger"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-sharjah.uae.subway-" + nowaday + ".csv")
+  worksheet.write_row(34,0,[33,'Europe-MEA','Subway Sharjah','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(34, 3, "internal:%s!A1" % ("sharjah.uae.subway"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-salalah.om.subway-" + nowaday + ".csv")
+  worksheet.write_row(35,0,[34,'Europe-MEA','Subway Salalah','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(35, 3, "internal:%s!A1" % ("salalah.om.subway"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-abudhabi.uae.subway-" + nowaday + ".csv")
+  worksheet.write_row(36,0,[35,'Europe-MEA','Subway Abu Dhabi','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(36, 3, "internal:%s!A1" % ("abudhabi.uae.subway"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-sg.pizzahut-" + nowaday + ".csv")
+  worksheet.write_row(37,0,[36,'Singapore','PIZZAHUT Singapore','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(37, 3, "internal:%s!A1" % ("sg.pizzahut"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-ca.cfa-" + nowaday + ".csv")
+  worksheet.write_row(38,0,[37,'Canada','Chick-Fil-A Canada','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(38, 3, "internal:%s!A1" % ("ca.cfa"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-ca.mcd-" + nowaday + ".csv")
+  worksheet.write_row(39,0,[38,'Canada','McD Canada','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(39, 3, "internal:%s!A1" % ("ca.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-us.scnbnc-" + nowaday + ".csv")
+  worksheet.write_row(40,0,[39,'America','Smithfields Chicken N Barbecue','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(40, 3, "internal:%s!A1" % ("us.scnbnc"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-us.cfa-" + nowaday + ".csv")
+  worksheet.write_row(41,0,[40,'America','Chick-Fil-A US','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(41, 3, "internal:%s!A1" % ("us.cfa"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-lc.kfc-" + nowaday + ".csv")
+  worksheet.write_row(42,0,[41,'America','KFC St Lucia','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(42, 3, "internal:%s!A1" % ("lc.kfc"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-sg.toysrus-" + nowaday + ".csv")
+  worksheet.write_row(43,0,[42,'Singapore','Toys R Us SG','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(43, 3, "internal:%s!A1" % ("sg.toysrus"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-us.legoland-" + nowaday + ".csv")
+  worksheet.write_row(44,0,[43,'America','LEGOLAND US','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(44, 3, "internal:%s!A1" % ("us.legoland"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-uae-subway-" + nowaday + ".csv")
+  worksheet.write_row(45,0,[44,'Europe-MEA','Subway UAE','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(45, 3, "internal:%s!A1" % ("'uae-subway'"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-hk.mcd-" + nowaday + ".csv")
+  worksheet.write_row(46,0,[45,'Hongkong','McD Hongkong','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(46, 3, "internal:%s!A1" % ("hk.mcd"),workfomat_border_url, string="detail")
+  get_num("./result_csv/DeviceList-Invoicing-au.parkassist-" + nowaday + ".csv")
+  worksheet.write_row(47,0,[46,'Oceania','Park Assist AU','detail', a, b, c, d],workfomat_border)
+  worksheet.write_url(47, 3, "internal:%s!A1" % ("au.parkassist"),workfomat_border_url, string="detail")
+  
+  worksheet.set_column('A:A', 8)
+  worksheet.set_column('B:B', 12)
+  worksheet.set_column('C:C', 30)
+
+  for filename in sorted(glob.glob("./%s/*.csv" % csv_dir), key=os.path.getsize, reverse=True):
+    print "  procsss %s" % filename
+    (f_path, f_name) = os.path.split(filename)
+    (f_short_name, f_extension) = os.path.splitext(f_name)
+    sheet_name = f_short_name[21:-9]
+    if sheet_name in ws_names:
+      sheet_name = "%s-%d" % (len(ws_names))
+    worksheet = workbook.add_worksheet(sheet_name)
+
+    spamReader = csv.reader(open(filename, 'rb'), delimiter=',',quotechar='"')
+#    worksheet.write(0, 18, xlwt.Formula("A3+B3"))
+    with open(filename, 'r') as f:
+      global total_row
+      total_row = len(f.readlines())
+#    print total_row 
+    worksheet.write_url(0, 19, "internal:%s!A1" % ("global"), workfomat_border_url, string="return_global")
+
+    row_count = 0
+    for row in spamReader:
+      for col in range(len(row)):
+        if col == 0 :
+          value = str(row[col])
+        else :
+          
+          value = row[col]
+          try:
+            value = int(value)
+          except:
+            try:
+              value = float(value)
+            except:
+               #print "    Value not number: %s" % row[col]
+               pass
+        if row_count == 0 :
+          worksheet.write(row_count, col, value, fmt_plain_fg)
+        else :
+            if col == 6 or col == 7 or col == 8:
+              if value == "" or value == "store_offline" or value == "          ":
+                worksheet.write(row_count, col, value, fmt_plain)
+              else:
+              	try:
+									value = datetime.strptime(value, "%Y/%m/%d")
+                	value = value.strftime('%d/%m/%Y')
+                except:
+                	value = datetime.strptime(value, "%Y-%m-%d")
+                	value = value.strftime('%d/%m/%Y')
+                worksheet.write(row_count, col, value, fmt_plain_date_formate)
+            else:
+              worksheet.write(row_count, col, value, fmt_plain)
+      row_count +=1
+      
+
+  workbook.close()
+  print "xlsx file saved: %s" % xlsxfile
+  return
+ 
+ 
+if __name__ == "__main__":
+ 
+  if len(sys.argv) != 3:
+    print "\nUsage:"
+    print "\t%s <csv dir> <nowaday>\n" % sys.argv[0]
+    sys.exit(0)
+ 
+  tag = time.strftime("%Y%m%d-%H%M%S")
+  rpt_dir = sys.argv[1]
+  nowaday = sys.argv[2]
+  #xlsxfile = "%s/merge_%s.xlsx" % (rpt_dir, tag)
+  xlsxfile = "merge_%s.xlsx" % (tag)
+  merge_csv2xlsx(rpt_dir, xlsxfile)

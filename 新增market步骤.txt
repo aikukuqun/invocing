@@ -1,0 +1,197 @@
+nowaday=20200709    ###输入当前日期即可，后面整合进对应日期目录
+cd ~/invoicing/all_date/
+cat >client_add.list
+pl.mcd
+at.mcd
+it.mcd
+be.mcd
+cz.mcd
+
+
+
+cat >hq_add.list
+ssh.pl.mcd.switchboardcms.com
+ssh.at.mcd.switchboardcms.com
+ssh.it.mcd.switchboardcms.com
+ssh.be.mcd.switchboardcms.com
+ssh.cz.mcd.switchboardcms.com
+
+
+
+cat > ~/invoicing/all_date/hq_client_add.list
+ssh.pl.mcd.switchboardcms.com     pl.mcd
+ssh.at.mcd.switchboardcms.com     at.mcd
+ssh.it.mcd.switchboardcms.com     it.mcd
+ssh.be.mcd.switchboardcms.com     be.mcd
+ssh.cz.mcd.switchboardcms.com     cz.mcd
+
+
+
+cat > ~/invoicing/all_date/hq_client_Dist_nz_au_add.list
+ssh.pl.mcd.switchboardcms.com     pl.mcd       pl.mcd
+ssh.at.mcd.switchboardcms.com     at.mcd       at.mcd
+ssh.it.mcd.switchboardcms.com     it.mcd       it.mcd
+ssh.be.mcd.switchboardcms.com     be.mcd       be.mcd
+ssh.cz.mcd.switchboardcms.com     cz.mcd       cz.mcd
+
+
+cat   ~/invoicing/all_date/client.list   ~/invoicing/all_date/client_add.list  |tee  ~/invoicing/all_date/client.list
+cat   ~/invoicing/all_date/hq.list   ~/invoicing/all_date/hq_add.list  |tee  ~/invoicing/all_date/hq.list
+cat   ~/invoicing/all_date/hq_client.list   ~/invoicing/all_date/hq_client_add.list  |tee  ~/invoicing/all_date/hq_client.list
+cat   ~/invoicing/all_date/hq_client_Dist_nz_au.list   ~/invoicing/all_date/hq_client_Dist_nz_au_add.list  |tee  ~/invoicing/all_date/hq_client_Dist_nz_au.list
+
+
+
+###修改merge 脚本
+在~/invoicing/all_date/merge_global.py  中找到类似如下的内容，在接下来一行继续添加对应的内容.
+#  get_num("./result_csv/DeviceList-Invoicing-au.parkassist-" + nowaday + ".csv")
+#  worksheet.write_row(47,0,[46,'Oceania','Park Assist AU','detail', a, b, c, d],workfomat_border)
+#  worksheet.write_url(47, 3, "internal:%s!A1" % ("au.parkassist"),workfomat_border_url, string="detail")
+
+get_num("./result_csv/DeviceList-Invoicing-pl.mcd-" + nowaday + ".csv")
+worksheet.write_row(48,0,[47,'Europe-MEA','MCD Poland','detail', a, b, c, d],workfomat_border)
+worksheet.write_url(48, 3, "internal:%s!A1" % ("pl.mcd"),workfomat_border_url, string="detail")
+
+get_num("./result_csv/DeviceList-Invoicing-at.mcd-" + nowaday + ".csv")
+worksheet.write_row(49,0,[47,'Europe-MEA','MCD Austria','detail', a, b, c, d],workfomat_border)
+worksheet.write_url(49, 3, "internal:%s!A1" % ("at.mcd"),workfomat_border_url, string="detail")  
+
+get_num("./result_csv/DeviceList-Invoicing-it.mcd-" + nowaday + ".csv")
+worksheet.write_row(50,0,[49,'Europe-MEA','MCD Italy','detail', a, b, c, d],workfomat_border)
+worksheet.write_url(50, 3, "internal:%s!A1" % ("it.mcd"),workfomat_border_url, string="detail")
+
+get_num("./result_csv/DeviceList-Invoicing-be.mcd-" + nowaday + ".csv")
+worksheet.write_row(51,0,[50,'Europe-MEA','MCD Belgium','detail', a, b, c, d],workfomat_border)
+worksheet.write_url(51, 3, "internal:%s!A1" % ("be.mcd"),workfomat_border_url, string="detail")
+
+get_num("./result_csv/DeviceList-Invoicing-cz.mcd-" + nowaday + ".csv")
+worksheet.write_row(52,0,[51,'Europe-MEA','MCD Czech','detail', a, b, c, d],workfomat_border)
+worksheet.write_url(52, 3, "internal:%s!A1" % ("cz.mcd"),workfomat_border_url, string="detail")  
+
+
+
+
+
+
+nowaday="20200709"    ###输入当前日期即可，后面整合进对应日期目录
+mkdir ~/invoicing/all_date/${nowaday}/
+mkdir ~/invoicing/all_date/${nowaday}/data_sbsr/
+mkdir ~/invoicing/all_date/${nowaday}/data_sbdv/
+mkdir ~/invoicing/all_date/${nowaday}/each/
+mkdir ~/invoicing/all_date/${nowaday}/tmp/
+mkdir ~/invoicing/all_date/${nowaday}/eachtmp/
+mkdir ~/invoicing/all_date/${nowaday}/result_csv
+mkdir ~/invoicing/all_date/${nowaday}/location_code_name/
+
+
+
+
+###数据源1，sbsr数据  
+for client in `cat ~/invoicing/all_date/client_add.list`
+do 
+sbsr-query -c ${client} towns_custom  --export-csv ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}.csv
+done
+
+###处理数据源1的location_code 有回车的数据把开头是",的print ， 把开头是"的printf ,实现自动转换
+
+for client in `cat ~/invoicing/all_date/client_add.list`
+do
+	awk -F "," '{if(substr($0,1,2)=="\",") print $0 ;else if($1~/^\"/) printf $0 ; else print $0}'   ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}.csv  >~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}_new.csv
+	mv ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}.csv  ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}_old.csv
+	mv ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}_new.csv ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}.csv
+	diff ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}.csv   ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}_old.csv
+done
+
+###修改完之后再进行构造code.ip
+##在新和旧的sbsr出来的数据中构造code.ip
+for client in `cat ~/invoicing/all_date/client_add.list`
+	do
+	cat ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}.csv  | awk -F , '{if($1=="") print "null,"$2","$3","$4 ;else print $0}' |awk 'BEGIN{FPAT = "([^,]+*)|(\"[^\"]+\")"}{print $1"."$4"."$2}' |awk -F . '{if($2!="") print $1"."$2"."$5 ;else print $3}'   > ~/invoicing/all_date/${nowaday}/data_sbsr/tmp_code.ip_${client}_${nowaday}.unl
+	paste -d ","  ~/invoicing/all_date/${nowaday}/data_sbsr/tmp_code.ip_${client}_${nowaday}.unl ~/invoicing/all_date/${nowaday}/data_sbsr/sbsr_${client}_${nowaday}.csv >  ~/invoicing/all_date/${nowaday}/data_sbsr/code.ip_sbsr_${client}_${nowaday}.csv
+done
+
+
+
+####准备数据源2：code|location_name 用于最后的location_name 匹配， 由于sbsr的数据可能不完整，所以获取hq数据库上的location 表的数据当成数据源
+for client in `cat ~/invoicing/all_date/client_add.list`
+do
+	python3  /home/coates/dev/sb-toolkit/tools/sb/sb-query-hq_towns.py ${client} "select code,name from location"  -e ~/invoicing/all_date/${nowaday}/tmp/tmp_location_name_${client}_${nowaday} 
+	dos2unix ~/invoicing/all_date/${nowaday}/tmp/tmp_location_name_${client}_${nowaday} 
+	awk -F "|"  '{if($2~/,/) print $1"|\""$2"\"" ; else print$0}' ~/invoicing/all_date/${nowaday}/tmp/tmp_location_name_${client}_${nowaday}  >~/invoicing/all_date/${nowaday}/tmp/location_name_${client}_${nowaday} 
+done
+
+
+
+####准备源数据3：sbs devcie， 获取列表后用于跑出SN 和installdate的数据
+###执行指令，完成数据源3的提取，然后下载到本机，下载完后修改分割符|为逗号
+nowaday=20200709
+hq=(`cat  ~/invoicing/all_date/hq_client_add.list|awk   '{print $1}'`)
+client=(`cat  ~/invoicing/all_date/hq_client_add.list|awk   '{print $2}'`)
+for ((i=0; i<${#hq[@]}; ++i))
+do
+(sb-ssh-hq-service ubuntu@${hq[$i]} sb1 "mkdir -p /tmp/townstmp/tmp/ && echo  'H4sIAAAAAAAAA1WOwQqCQBiE7z3FtAhWUn8UXYI6dgzqKhLrutWSurb/mkj27iV16TYz3wwM1ewot0rmlJqSuDFeXVMrXYZMP1C0fM8PtXYtBOtcK48Jzs4WPTVKw7pMO6Qt2Mui+qSsBDrZ3DDdQXQC4VDGwSqJomflTOlfITrWGZjieM2VVHqdJESXv8m3imApIIJVP+lpuD9uF09zHgWL4UaIMX6t+SvcgnxRkbdNyb3g9PT9x7OPHbwBRWB4buUAAAA=' | base64 --decode | gzip -cfd > '/tmp/get_vpn.sh'  && chmod 755  /tmp/get_vpn.sh &&  /tmp/get_vpn.sh  && echo  'H4sIAAAAAAAAA6VTXWvbMBR936+4GEGSB8dLGWNM88NgKwmMkrEWBiXEsnRdizpWK8kLLE5/+661JHPaZHuYDBayzz3n3A9Nvy4vZ18+L+cfr6fpIPkhbFLpPHFr7WWZG2FVooQXSY1+bez9uHwc8Jub2aejKPQyaRqtxr2wAS8flyujdKFRLYkD04gNux3iWDsTv3v7epI6lKZWjj41XtLbYoEWa4kpm/acjSLe8f8X37FrYtS186Kq9lzP7RKggNtbiNhL6Qg+wIkIWCw4+BJr2K9nGieYOBSaizQrjfO1WGHG8zRzjTKgVlpROooS9HDR3ll8gOgbWi0quGpWOdqoFet7gPgS3sNg82B17YFdbAcZcAD5N5q5NaqRHq5I8SwLV2kmhYfQ390AJPQXbSEkOoDfZEIpi84Fln48tCUKBfGE7HSlhPgnsI3awoKHGhG7Lqhdhb4DNjwIHQT60zTa+dZkIwhGpN4T7PTC+UUWBxMcsAo2gocUou/j8FDXdk0jQ0nj6AIYKaok13X/GgA10jcO9ioR6USkpIshmzwlszmcWckITtUk9B13BT577TorXpu6g6cZytKQ/f5Qbfd+rv9kPQkTUGjnDyHqgBsf43gl/gV708ECgGYex2zTMW9p70K3LcOWiZaplsmW5S0role/ALQ/VdhVBAAA' | base64 --decode | gzip -cfd > '/tmp/townstmp/task_cmd.sh'   &&  echo 'H4sIAAAAAAAAA6VWbW8bRRD+vr9iODukTWM7RlCJwkUEi4ioSRSF8gFRlNvcretV7vaO273YkXNShBAvgjYgKEglQq0EIqpEioSABCHxY4jd9hN/gdm7dXxxXlrgIsXn2d1nZp95ZsalZ2qJjGurXNSYWIdVKlukdIMp8KiiEMbAOswFNwwCKjzgAhaWiAjb1KMbtoN7GFwae2ssGPMc0g7jNY/HtlVTQVRTYVtIfLEI/svM5a7ZkdYG9ib3mW3FTCa+qmbG/P2YPRG+RXwujVWurnhsnbtM5ifmcWUWV64FkW0t0oDNRfian7rGAxYmak40Q9tS+ReLuKFwkzhmQtn1F6HwlEql3vZX/d17vYNfe9uf//3Hp/27B/2be3NLD++839/Z6n1263B/63D/fu/Hr/t7v/Q++Lm3d+fRg+/nlno7u70v7uPKoz+/ebj7CZ7sPTg4/P1W77sfHn+4jafRcrj/5UkMDbx773D/Jhr7d3/TX2//hC77Ox/3b3/U/3bnr633yBKVErnzbMelCmpMuTXZ5sptrYY09qpBVInMDoc0gsG2YhZqisq1FTfwqrLlEFJibisEayNMwKUC0xolCkLBdMKDMGZgGIYs6dFkMxMCDSKfwXVrYX7m1Uqn04H6VLWj/65bmr3XhGLxZEPF/iUPVAjM4wqaXHDZskhJhzRdkEC5O0hpivHEjHpQicBCD1QyE5GOr02FgmHG8DUR6opVMJ11WrUYqhUG1OCZAY/m/iP7jcivWAYQkEqin4ByceFilwxkMruiNYci02qzy/WjBX3HcjfXu77hsY3pZruFt4UMe3ZFoAk/eES8UAMscXFjMQlsJ8IXqLhQBw3Ao3TzRszwbnW8ibvGlAQVUyEDrhTzLNik7TUY70YxR3LKl9PxzFCZhbGhtZ6OO9oHb8LbiGpcpVBh78IUvPMSMiUIjDxStjR1mlc8YphLtRkqM1AJ4Q0Vc1e9Hkp1lW00WsxdQ1xbhHrtTcniq9gnhF6WujztGmqqJhLf1+uNUAjmKlOf9nNTGSCL11k84/N1Nqe1tE59+/LoSkPnf4F27BegoqDSAEhW0ZK8YtgC7DOYuBQlOX0sGabdpCNpKU1UU3j5KLgTNJQWQo/5tpPTzJsXFpdtu34RDLVT6fjTenFgCG5ARwVz3ukTkeU1rLeKTF4DuZS7GXrGwHQRfdhbx6oTafUUJ9oH87Ei/oWzQo/9ry6bHItAsCOn2BGWA8OFLjzcriWUpd52fFngDEx1lLuFOYBxbLZdqPgOMZIvIqDusdMVdR8Hx7JQRJogGBxZzq7x5BiG1z0ZwgjGE6MoYBWDwKDOj2GgIT0A/28MBawsBtxBMDnD7Oj2OOP7p/Nz1OsHwVHfP5+jk1BnhHgEPQqZMZWX1WmjBopNOGvBPALTgbNnnkqVteFM8OWu1rhpqNVhQ33eNNTsWWZ6QHgsxkOdKMZDBiTFHlzuDgdVoYYH5ZQVU+4mq50zdahzZ9ykebEQoqdyoZr0r7OnKw4HEXSJa0DIFwdDCp416G3KFRntT0VNHpvmo2lYwavlvxKLtUzya0dxiL8tpB64OIDVZORLPYVdPULOy20B1CL/APbL07y5CgAA' | base64 --decode | gzip -cfd > '/tmp/townstmp/GetDataConcurrent.sh'  && chmod 755  /tmp/townstmp/GetDataConcurrent.sh &&   /tmp/townstmp/GetDataConcurrent.sh "  < /dev/null     >> ~/invoicing/all_date/${nowaday}/hq_print.log  ;wait; sb-scp-from-hq-service  ubuntu@${hq[$i]} sb1  ~/invoicing/all_date/${nowaday}/data_sbdv/VPN_SN_${client[$i]}_${nowaday}.csv /tmp/townstmp/allresult.unl_${nowaday} < /dev/null   && perl -pi -ne "s/\|/\,/g"   ~/invoicing/all_date/${nowaday}/data_sbdv/VPN_SN_${client[$i]}_${nowaday}.csv ) &
+done
+
+
+
+###创建空each,和空的code.ip 文件，用于与这个空文件对比生成新的文件。    在需要合并的版本的日期的each 目录和data_sbsr下创建空文件
+oldday=20200624
+nowaday=20200709
+for client in `cat ~/invoicing/all_date/client_add.list`
+	do
+	echo "Location.Code.ip,Location Code,Device Code,state,ip,vpn_ip,model,sn,Install Date (Invoicing),\"Install Date (SB Output)  Current\",Install Date (SB Output) Previous,type"   >~/invoicing/all_date/${oldday}/each/Each-Device-${client}-${oldday}.csv
+	echo "Location Code.ip.,Location Code,Device Code,location_name,ip,vpn_ip,Install Date,output_primary_assignment,output_secondary_assignment,output_1_assignment,output_2_assignment,output_3_assignment,output_4_assignment"  >~/invoicing/all_date/${oldday}/data_sbsr/code.ip_sbsr_${client}_${oldday}.csv
+done
+
+
+
+#########开始比较及处理数据
+nowaday=20200709
+oldday=20200624
+
+cat ~/invoicing/all_date/hq_client_add.list |while read hq client
+do
+~/invoicing/all_date/create_manual_each.sh  ${hq}  ${client}  ${nowaday}  ${oldday}
+done
+
+
+#############ftp 下载整个目录，人工判断eachtmp下的所有文件，判断修改完成后另存为在each目录下，并修改文件名。
+ftp下来后，检查below_is_add 和  below_is_sbdv_data_add  新增加的数据，需要增加则加上去。 
+删除不用增加的机器，补充需要增加的数据完整性(state,type,)，排序，注意location_code  不足补零  =REPT(0,3-LEN(B2))&B2      
+保存成${new_each_file}
+
+
+
+#############人工判断完后上传到处理的机器，进行格式整合，表格合并
+###把当前日期下的新增的each tmp  data_sbdv data_sbsr 下的文件拷贝入老版本的对应文件夹中，并修改成老日期
+
+nowaday=20200709
+oldday=20200624
+for client in `cat  ~/invoicing/all_date/client_add.list`
+do
+cp  ~/invoicing/all_date/${nowaday}/each/Each-Device-${client}-${nowaday}.csv  ~/invoicing/all_date/${oldday}/each/Each-Device-${client}-${oldday}.csv  
+cp  ~/invoicing/all_date/${nowaday}/tmp/location_name_${client}_${nowaday}  ~/invoicing/all_date/${oldday}/tmp/location_name_${client}_${oldday}
+cp  ~/invoicing/all_date/${nowaday}/data_sbdv/VPN_SN_${client}_${nowaday}.csv  ~/invoicing/all_date/${oldday}/data_sbdv/VPN_SN_${client}_${oldday}.csv
+cp  ~/invoicing/all_date/${nowaday}/data_sbsr/code.ip_sbsr_${client}_${nowaday}.csv  ~/invoicing/all_date/${oldday}/data_sbsr/code.ip_sbsr_${client}_${oldday}.csv
+done
+
+
+
+nowaday=20200624   ###此处日期改成大版本的老日期
+oldday=20200527    ###对比日期改成更老版本的日期
+cat ~/invoicing/all_date/hq_client_Dist_nz_au.list |while read hq client client_dist
+do
+~/invoicing/all_date/create_manual_invoicing.sh  ${hq}  ${client} ${client_dist} ${nowaday}  ${oldday}
+done
+
+~/invoicing/all_date/create_manual_invoicing.sh  au.parkassist.switchboardcms.com  au.parkassist  au.parkassist ${nowaday}  ${oldday}
+~/invoicing/all_date/create_manual_invoicing.sh  hk.mcd.coatesdigital.com.au  hk.mcd hk.mcd  ${nowaday}  ${oldday}
+
+
+nowaday=20200624    ###此处日期改成大版本的老日期
+cd ~/invoicing/all_date/${nowaday}
+python ~/invoicing/all_date/merge_global.py  ./result_csv  ${nowaday}
+
+
+
+
